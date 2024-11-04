@@ -55,7 +55,7 @@ pipeline {
             steps {
                 script {
                     // Run the Docker container using the image method
-                    docker.image(DOCKER_IMAGE).run('--rm -d -p 8080:8080') // Using '--rm' to clean up after the container exits
+                    docker.image(DOCKER_IMAGE).run('--rm -d -p 8081:8080') // Using '--rm' to clean up after the container exits
                 }
             }
         }
