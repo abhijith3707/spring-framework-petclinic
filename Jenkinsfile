@@ -1,11 +1,20 @@
 pipeline {
     agent any
+
     stages {
+        stage('Checkout') {
+            steps {
+                // Checkout your repository (update the URL to your repo)
+                git 'https://github.com/abhijith3707/spring-framework-petclinic.git'
+            }
+        }
+
         stage('Build') { 
             steps {
                 sh 'mvn -B -DskipTests clean package' 
             }
         }
+
         stage('OWASP Dependency-Check Vulnerabilities') {
             steps {
                 dependencyCheck additionalArguments: ''' 
@@ -17,6 +26,7 @@ pipeline {
                 dependencyCheckPublisher pattern: 'dependency-check-report.xml'
             }
         }
+
         stage('Build WAR Package') {
             steps {
                 echo 'Building the WAR package...'
@@ -25,21 +35,13 @@ pipeline {
                 archiveArtifacts artifacts: 'target/*.war', allowEmptyArchive: false
             }
         }
-    }
-      stages {
-        stage('Checkout') {
-            steps {
-                // Checkout your repository (update the URL to your repo)
-                git 'https://github.com/abhijith3707/spring-framework-petclinic.git'
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
                 script {
                     def appName = 'petclinic'  // Change this to your desired image name
                     // Build the Docker image
-                    docker.build(petclinic)
+                    docker.build(appName) // Use appName variable here
                 }
             }
         }
