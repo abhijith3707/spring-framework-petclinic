@@ -18,4 +18,15 @@ pipeline {
             }
         }
     }
+    stages {
+        stage('Build WAR Package') {
+            steps {
+                echo 'Building the WAR package...'
+                // Assuming Maven is used for Java project
+                sh 'mvn clean package -DskipTests'
+                archiveArtifacts artifacts: 'target/*.war', allowEmptyArchive: false
+            }
+        }
+    }
+
 }
