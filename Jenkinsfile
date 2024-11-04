@@ -26,4 +26,40 @@ pipeline {
             }
         }
     }
+      stages {
+        stage('Checkout') {
+            steps {
+                // Checkout your repository (update the URL to your repo)
+                git 'https://github.com/abhijith3707/spring-framework-petclinic.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def appName = 'petclinic'  // Change this to your desired image name
+                    // Build the Docker image
+                    docker.build(petclinic)
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    // Run the Docker container
+                    docker.run('petclinic', '-d -p 8080:8080')
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed.'
+        }
+    }
 }
