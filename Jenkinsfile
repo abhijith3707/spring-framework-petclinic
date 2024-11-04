@@ -1,11 +1,9 @@
 pipeline {
     agent any
-
     stages {
-        stage('Unit Test') {
+        stage('Build') { 
             steps {
-                echo 'Running Maven Unit Tests'
-                sh 'mvn test'
+                sh 'mvn -B -DskipTests clean package' 
             }
         }
     }
