@@ -17,8 +17,6 @@ pipeline {
                 dependencyCheckPublisher pattern: 'dependency-check-report.xml'
             }
         }
-    }
-    stages {
         stage('Build WAR Package') {
             steps {
                 echo 'Building the WAR package...'
@@ -28,5 +26,4 @@ pipeline {
             }
         }
     }
-
 }
