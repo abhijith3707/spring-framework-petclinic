@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        APP_NAME = 'petclinic'  // Change this to your desired image name
+        WAR_FILE = 'target/*.war' // Path to the WAR file
+        DOCKER_IMAGE = "${env.APP_NAME}:latest"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -32,16 +38,15 @@ pipeline {
                 echo 'Building the WAR package...'
                 // Assuming Maven is used for Java project
                 sh 'mvn clean package -DskipTests'
-                archiveArtifacts artifacts: 'target/*.war', allowEmptyArchive: false
+                archiveArtifacts artifacts: WAR_FILE, allowEmptyArchive: false
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    def appName = 'petclinic'  // Change this to your desired image name
                     // Build the Docker image
-                    docker.build(appName) // Use appName variable here
+                    docker.build(DOCKER_IMAGE) // Use DOCKER_IMAGE variable here
                 }
             }
         }
@@ -50,7 +55,7 @@ pipeline {
             steps {
                 script {
                     // Run the Docker container
-                    docker.run('petclinic', '-d -p 8080:8080')
+                    docker.run(DOCKER_IMAGE, '-d -p 8080:8080')
                 }
             }
         }
@@ -62,6 +67,13 @@ pipeline {
         }
         failure {
             echo 'Deployment failed.'
+        }
+        always {
+            // Optional: Cleanup
+            script {
+                echo 'Cleaning up Docker containers...'
+                sh 'docker container prune -f'
+            }
         }
     }
 }
