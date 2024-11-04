@@ -54,8 +54,8 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Run the Docker container
-                    docker.run(DOCKER_IMAGE, '-d -p 8080:8080')
+                    // Run the Docker container using the image method
+                    docker.image(DOCKER_IMAGE).run('--rm -d -p 8080:8080') // Using '--rm' to clean up after the container exits
                 }
             }
         }
