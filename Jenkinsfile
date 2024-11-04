@@ -4,8 +4,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout your repository (update the URL to your repo)
-                git 'https://github.com/abhijith3707/spring-framework-petclinic.git'
+                // Checkout your repository from the main branch
+                git branch: 'main', url: 'https://github.com/abhijith3707/spring-framework-petclinic.git'
             }
         }
 
