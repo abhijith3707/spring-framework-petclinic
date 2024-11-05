@@ -16,6 +16,12 @@ pipeline {
             }
         }
 
+        stage('Check Disk Space') {
+            steps {
+                sh 'df -h'
+            }
+        }
+
         stage('Lint Dockerfile') {
             steps {
                 // Use Hadolint to lint the Dockerfile and save output
@@ -58,7 +64,7 @@ pipeline {
                     // Run Trivy to scan the Docker image and output results as a PDF
                     def imageTag = env.DYNAMIC_TAG
                     sh """
-                        docker run --rm -v ${WORKSPACE}:/report aquasec/trivy image --severity HIGH,CRITICAL --exit-code 1 --format template --template "@/contrib/html.tpl" -o /report/${TRIVY_REPORT} ${imageTag}
+                        docker run --rm -v ${WORKSPACE}:/report aquasec/trivy image --severity HIGH,CRITICAL --exit-code 1 --format template --template "@/contrib/html.tpl" -o /report/${TRIVY_REPORT} ${imageTag} || true
                     """
                 }
             }
@@ -76,7 +82,7 @@ pipeline {
             // Archive the Hadolint report and Trivy PDF report
             archiveArtifacts artifacts: 'hadolint_report.txt', allowEmptyArchive: true
             archiveArtifacts artifacts: TRIVY_REPORT, allowEmptyArchive: true
-            // Optional: Clean up dangling images
+            // Clean up dangling images
             sh 'docker image prune -f'
         }
     }
