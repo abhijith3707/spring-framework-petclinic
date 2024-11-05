@@ -52,6 +52,9 @@ pipeline {
         stage('Docker Image Vulnerability Scanning (Trivy)') {
             steps {
                 script {
+                    // Pull the Trivy image
+                    sh 'docker pull aquasec/trivy:latest'
+
                     // Run Trivy to scan the Docker image and output results as a PDF
                     def imageTag = env.DYNAMIC_TAG
                     sh """
