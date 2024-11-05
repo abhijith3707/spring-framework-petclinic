@@ -55,7 +55,7 @@ pipeline {
                     // Run Trivy to scan the Docker image and output results as a PDF
                     def imageTag = env.DYNAMIC_TAG
                     sh """
-                        docker run --rm -v $(pwd):/report aquasec/trivy image --severity HIGH,CRITICAL --exit-code 1 --format template --template "@/contrib/html.tpl" -o /report/${TRIVY_REPORT} ${imageTag}
+                        docker run --rm -v ${WORKSPACE}:/report aquasec/trivy image --severity HIGH,CRITICAL --exit-code 1 --format template --template "@/contrib/html.tpl" -o /report/${TRIVY_REPORT} ${imageTag}
                     """
                 }
             }
