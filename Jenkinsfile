@@ -6,6 +6,7 @@ pipeline {
         DOCKERFILE_PATH = 'Dockerfile' // Path to your Dockerfile
         WAR_FILE = 'target/*.war' // Path to the WAR file
         TRIVY_REPORT = 'trivy_report.pdf' // PDF report filename
+        GITHUB_TOKEN = credentials('your-github-token') // Use Jenkins credentials for GitHub token
     }
 
     stages {
@@ -58,14 +59,34 @@ pipeline {
         stage('Docker Image Vulnerability Scanning (Trivy)') {
             steps {
                 script {
-                    // Pull the Trivy image
-                    sh 'docker pull aquasec/trivy:latest'
-
-                    // Run Trivy to scan the Docker image and output results as a PDF
+                    def retries = 5
+                    def delay = 10 // seconds
+                    def success = false
                     def imageTag = env.DYNAMIC_TAG
-                    sh """
-                        docker run --rm -v ${WORKSPACE}:/report aquasec/trivy image --severity HIGH,CRITICAL --exit-code 1 --format template --template "@/contrib/html.tpl" -o /report/${TRIVY_REPORT} ${imageTag} || true
-                    """
+
+                    while (!success && retries > 0) {
+                        try {
+                            // Log in to GitHub Container Registry using PAT
+                            sh "echo ${GITHUB_TOKEN} | docker login ghcr.io -u your_github_username --password-stdin"
+
+                            // Pull the Trivy image
+                            sh 'docker pull aquasec/trivy:latest'
+
+                            // Run Trivy to scan the Docker image and output results as a PDF
+                            sh """
+                                docker run --rm -v ${WORKSPACE}:/report aquasec/trivy image --severity HIGH,CRITICAL --exit-code 1 --format template --template "@/contrib/html.tpl" -o /report/${TRIVY_REPORT} ${imageTag}
+                            """
+                            success = true // If successful, exit loop
+                        } catch (e) {
+                            retries--
+                            if (retries > 0) {
+                                echo "Rate limit hit or an error occurred. Retrying in ${delay} seconds..."
+                                sleep(delay)
+                            } else {
+                                error "Failed to pull Trivy DB after multiple attempts."
+                            }
+                        }
+                    }
                 }
             }
         }
