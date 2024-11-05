@@ -5,8 +5,8 @@ pipeline {
         APP_NAME = 'petclinic'  // Desired image name
         DOCKERFILE_PATH = 'Dockerfile' // Path to your Dockerfile
         WAR_FILE = 'target/*.war' // Path to the WAR file
-        TRIVY_REPORT = 'trivy_report.pdf' // PDF report filename
         SONAR_PROJECT_KEY = 'petclinic' // SonarQube project key
+        SONAR_PLUGIN_VERSION = 'org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121' // Explicit SonarQube Maven plugin version
     }
 
     stages {
@@ -24,7 +24,7 @@ pipeline {
 
         stage('Lint Dockerfile') {
             steps {
-                sh 'docker run --rm -i hadolint/hadolint < ${DOCKERFILE_PATH} > hadolint_report.txt'
+                sh "docker run --rm -i hadolint/hadolint < ${DOCKERFILE_PATH} > hadolint_report.txt"
             }
         }
 
@@ -39,8 +39,8 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    withSonarQubeEnv('server-sonar') { // Ensure "SonarQube" matches the configured server name in Jenkins
-                        sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar -Dsonar.projectKey=$SONAR_PROJECT_KEY'
+                    withSonarQubeEnv('server-sonar') { // Make sure 'server-sonar' matches the configured server name in Jenkins
+                        sh "mvn ${SONAR_PLUGIN_VERSION}:sonar -Dsonar.projectKey=${SONAR_PROJECT_KEY}"
                     }
                 }
             }
