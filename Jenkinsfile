@@ -81,7 +81,7 @@ pipeline {
         always {
             // Archive the Hadolint report and Trivy PDF report
             archiveArtifacts artifacts: 'hadolint_report.txt', allowEmptyArchive: true
-            archiveArtifacts artifacts: TRIVY_REPORT, allowEmptyArchive: true
+            // archiveArtifacts artifacts: TRIVY_REPORT, allowEmptyArchive: true
             // Clean up dangling images
             sh 'docker image prune -f'
         }
