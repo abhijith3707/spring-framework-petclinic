@@ -5,7 +5,7 @@ pipeline {
         APP_NAME = 'petclinic'  // Desired image name
         DOCKERFILE_PATH = 'Dockerfile' // Path to your Dockerfile
         WAR_FILE = 'target/*.war' // Path to the WAR file
-        TRIVY_REPORT = 'trivy_report.pdf' // PDF report filename
+        TRIVY_REPORT = 'trivy_report.html' // HTML report filename for Trivy
     }
 
     stages {
@@ -61,10 +61,18 @@ pipeline {
                     // Pull the Trivy image
                     sh 'docker pull aquasec/trivy:latest'
 
-                    // Run Trivy to scan the Docker image and output results as a PDF
+                    // Run Trivy to scan the dynamically tagged Docker image and output results as HTML
                     def imageTag = env.DYNAMIC_TAG
                     sh """
-                        docker run -u 0 --rm -v $PWD:/tmp/.cache/ aquasec/trivy image --format template --template "@contrib/html.tpl" -o trivy_result.html 3edc2ce423c8/python:3.10_pip_aws
+                        docker run -u 0 --rm \
+                        -v $PWD:/root/.cache/ \
+                        -v $PWD:/scan-results \
+                        aquasec/trivy image \
+                        --cache-dir /root/.cache/ \
+                        --format template \
+                        --template "@contrib/html.tpl" \
+                        -o /scan-results/${TRIVY_REPORT} \
+                        ${imageTag}
                     """
                 }
             }
@@ -79,7 +87,7 @@ pipeline {
             echo "Pipeline failed due to high/critical vulnerabilities."
         }
         always {
-            // Archive the Hadolint report and Trivy PDF report
+            // Archive the Hadolint report and Trivy HTML report
             archiveArtifacts artifacts: 'hadolint_report.txt', allowEmptyArchive: true
             archiveArtifacts artifacts: TRIVY_REPORT, allowEmptyArchive: true
             // Clean up dangling images
