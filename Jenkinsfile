@@ -40,7 +40,7 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('server-sonar') { // Ensure "SonarQube" matches the configured server name in Jenkins
-                        sh 'mvn sonar:sonar -Dsonar.projectKey=$SONAR_PROJECT_KEY'
+                        sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar -Dsonar.projectKey=$SONAR_PROJECT_KEY'
                     }
                 }
             }
