@@ -55,21 +55,21 @@ pipeline {
             }
         }
 
-    //     stage('Docker Image Vulnerability Scanning (Trivy)') {
-    //         steps {
-    //             script {
-    //                 // Pull the Trivy image
-    //                 sh 'docker pull aquasec/trivy:latest'
+        // stage('Docker Image Vulnerability Scanning (Trivy)') {
+        //     steps {
+        //         script {
+        //             // Pull the Trivy image
+        //             sh 'docker pull aquasec/trivy:latest'
 
-    //                 // Run Trivy to scan the Docker image and output results as a PDF
-    //                 def imageTag = env.DYNAMIC_TAG
-    //                 sh """
-    //                     docker run -u 0 --rm -v $PWD:/tmp/.cache/ aquasec/trivy image --format template --template "@contrib/html.tpl" -o trivy_result.html 3edc2ce423c8/python:3.10_pip_aws
-    //                 """
-    //             }
-    //         }
-    //     }
-    // }
+        //             // Run Trivy to scan the Docker image and output results as a PDF
+        //             def imageTag = env.DYNAMIC_TAG
+        //             sh """
+        //                 docker run -u 0 --rm -v $PWD:/tmp/.cache/ aquasec/trivy image --format template --template "@contrib/html.tpl" -o trivy_result.html 3edc2ce423c8/python:3.10_pip_aws
+        //             """
+        //         }
+        //     }
+        // }
+    }
 
     post {
         success {
