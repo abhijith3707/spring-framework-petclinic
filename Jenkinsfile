@@ -39,8 +39,8 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    withSonarQubeEnv('server-sonar') { // Make sure 'server-sonar' matches the configured server name in Jenkins
-                        sh "mvn ${SONAR_PLUGIN_VERSION}:sonar -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.organization="
+                    withSonarQubeEnv('server-sonar') { // Ensure this matches your configured server name in Jenkins
+                sh "mvn ${SONAR_PLUGIN_VERSION}:sonar -Dsonar.projectKey=${SONAR_PROJECT_KEY}"
                     }
                 }
             }
