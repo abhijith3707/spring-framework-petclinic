@@ -36,9 +36,15 @@ pipeline {
         stage('Build WAR Package') {
             steps {
                 echo 'Building the WAR package...'
-                // Assuming Maven is used for Java project
                 sh 'mvn clean package -DskipTests'
                 archiveArtifacts artifacts: WAR_FILE, allowEmptyArchive: false
+            }
+        }
+
+        stage('Lint Dockerfile') {
+            steps {
+                // Using Hadolint to lint the Dockerfile
+                sh 'docker run --rm -i hadolint/hadolint < Dockerfile > hadolint_report.txt'
             }
         }
 
@@ -50,30 +56,19 @@ pipeline {
                 }
             }
         }
-
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    // Run the Docker container using the image method
-                    docker.image(DOCKER_IMAGE).run('--rm -d -p 8081:8080') // Using '--rm' to clean up after the container exits
-                }
-            }
-        }
     }
 
     post {
         success {
-            echo 'Deployment successful!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Deployment failed.'
+            echo 'Pipeline failed.'
         }
         always {
-            // Optional: Cleanup
-            script {
-                echo 'Cleaning up Docker containers...'
-                sh 'docker container prune -f'
-            }
+            archiveArtifacts artifacts: 'hadolint_report.txt', allowEmptyArchive: true
+            // Optional: Clean up Docker containers if needed
+            sh 'docker container prune -f'
         }
     }
 }
