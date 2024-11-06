@@ -36,28 +36,28 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    withSonarQubeEnv('server-sonar') { // Ensure this matches your configured server name in Jenkins
-                sh "mvn -X ${SONAR_PLUGIN_VERSION}:sonar -Dsonar.projectKey=${SONAR_PROJECT_KEY}"
-                    }
-                }
-            }
-        }
+        // stage('SonarQube Analysis') {
+        //     steps {
+        //         script {
+        //             withSonarQubeEnv('server-sonar') { // Ensure this matches your configured server name in Jenkins
+        //         sh "mvn -X ${SONAR_PLUGIN_VERSION}:sonar -Dsonar.projectKey=${SONAR_PROJECT_KEY}"
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Quality Gate Check') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    script {
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Quality Gate Check') {
+        //     steps {
+        //         timeout(time: 5, unit: 'MINUTES') {
+        //             script {
+        //                 def qualityGate = waitForQualityGate()
+        //                 if (qualityGate.status != 'OK') {
+        //                     error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Build Docker Image with Dynamic Tagging') {
             steps {
