@@ -36,24 +36,33 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarQube Code Analysis') {
             steps {
+                dir("${WORKSPACE}"){
+                // Run SonarQube analysis for Python
                 script {
-                    withSonarQubeEnv('server-sonar') { // Ensure this matches your configured server name in Jenkins
-                sh "mvn -X ${SONAR_PLUGIN_VERSION}:sonar -Dsonar.projectKey=${SONAR_PROJECT_KEY}"
+                    def scannerHome = tool name: 'server-sonar', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                    withSonarQubeEnv('sonar') {
+                        sh "echo $pwd"
+                        sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
             }
-        }
+            }
+       }
 
-        stage('Quality Gate Check') {
+        stage("SonarQube Quality Gate Check") {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    script {
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
-                        }
+                script {
+                def qualityGate = waitForQualityGate()
+                    
+                    if (qualityGate.status != 'OK') {
+                        echo "${qualityGate.status}"
+                        error "Quality Gate failed: ${qualityGateStatus}"
+                    }
+                    else {
+                        echo "${qualityGate.status}"
+                        echo "SonarQube Quality Gates Passed"
                     }
                 }
             }
