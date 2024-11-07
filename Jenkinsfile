@@ -71,20 +71,17 @@ pipeline {
                 }
             }
         }
-        stage('Dependency Check') {
-            steps {
-                script {
-                    // Run Dependency-Check analysis
-                    sh 'dependency-check --project Petclinic --scan . --out dependency-check-report'
-                }
-                
-                // Archive the generated report in Jenkins
-                archiveArtifacts artifacts: 'dependency-check-report/*', allowEmptyArchive: true
-
-                // Publish the report if using Jenkins' OWASP Dependency-Check plugin
-                dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml'
-            }
-        }        
+        stage('OWASP Dependency-Check Vulnerabilities') {
+      steps {
+        dependencyCheck additionalArguments: ''' 
+                    -o './'
+                    -s './'
+                    -f 'ALL' 
+                    --prettyPrint''', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
+        
+        dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+      }
+    }
         stage('Build Docker Image with Dynamic Tagging') {
             steps {
                 script {
