@@ -105,7 +105,7 @@ pipeline {
 
             // Start OWASP ZAP in daemon mode
             sh """
-            docker run -d --name zap-daemon -p 8080:8080 -v \$PWD:/zap/wrk zaproxy/zap-stable zap.sh -daemon -host 0.0.0.0 -port 8081
+            docker run -d --name zap-daemon -p 8081:8080 -v \$PWD:/zap/wrk zaproxy/zap-stable zap.sh -daemon -host 0.0.0.0 -port 8080
             """
 
             // Run the selected ZAP scan command
