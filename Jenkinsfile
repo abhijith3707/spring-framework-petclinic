@@ -94,11 +94,11 @@ pipeline {
             
             // Determine the ZAP scan command based on the selected scan type
             if (SCAN_TYPE == 'Baseline') {
-                scanCommand = 'zap-baseline.py -t http://google.com'
+                scanCommand = 'zap-baseline.py -t https://google.com'
             } else if (SCAN_TYPE == 'API') {
-                scanCommand = 'zap-api-scan.py -t http://google.com/openapi.json'
+                scanCommand = 'zap-api-scan.py -t https://google.com/openapi.json'
             } else if (SCAN_TYPE == 'Full') {
-                scanCommand = 'zap-full-scan.py -t http://google.com'
+                scanCommand = 'zap-full-scan.py -t https://google.com'
             }
 
             // Pull the latest image
