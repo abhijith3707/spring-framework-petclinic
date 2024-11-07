@@ -42,16 +42,13 @@ pipeline {
                             withSonarQubeEnv('server-sonar') {
                                 sh '''
                                 /opt/sonar-scanner/bin/sonar-scanner \
-                                -Dsonar.projectKey=$PROJECT_NAME \
+                                -Dsonar.projectKey=demo-project \
                                 -Dsonar.sourceEncoding=UTF-8 \
                                 -Dsonar.language=java \
                                 -Dsonar.sources=. \
                                 -Dsonar.tests=. \
                                 -Dsonar.java.binaries=. \
                                 -Dsonar.java.test.binaries=. \
-                                -Dsonar.java.coveragePlugin=jacoco \
-                                -Dsonar.coverage.jacoco.xmlReportPaths=java/jivox-targeting-coverage/target/site/jacoco-aggregate/jacoco.xml \
-                                -Dsonar.jacoco.reportPaths=. \
                                 -Dsonar.test.inclusions=/Test/ \
                                 '''
                             }
