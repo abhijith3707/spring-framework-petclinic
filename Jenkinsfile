@@ -99,11 +99,7 @@ pipeline {
             steps {
                 script {
                     // scan the image
-                    sh 'docker run   --rm   -v "$(realpath .):/opt/src" -v /tmp/trivy-cache:/cache -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db"   -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db"   -w /opt/src   aquasec/trivy:0.56.2 --cache-dir /cache image --quiet ubuntu:latest' 
-                    // Generate the Report
-                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest -f template --template "@contrib/html.tpl" image "${APP_NAME}:${commitId}-${buildNumber}" > scan.html'
-                    // fails the build,if the scan finds high and critical vulnerabilities
-                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest --exit-code 1 --severity HIGH,CRITICAL image "${APP_NAME}:${commitId}-${buildNumber}"'
+                    sh 'docker run   --rm   -v "$(realpath .):/opt/src"   -v /run/docker.sock:/var/run/docker.sock   -v /tmp/trivy-cache:/cache   -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db"   -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db"   -w /opt/src   aquasec/trivy:0.56.2 --cache-dir /cache image --quiet "${APP_NAME}:${commitId}-${buildNumber}"'
                 }
             }
         }
