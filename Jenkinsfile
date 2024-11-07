@@ -36,21 +36,28 @@ pipeline {
             }
         }
 
-        stage('SonarQube Code Analysis') {
-            steps {
-                dir("${WORKSPACE}"){
-                // Run SonarQube analysis for Python
-                script {
-                    def scannerHome = tool name: 'server-sonar', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    withSonarQubeEnv('sonar') {
-                        sh "echo $pwd"
-                        sh "${scannerHome}/bin/sonar-scanner"
+       stage('SonarQube analysis') {
+                steps {
+                        script{
+                            withSonarQubeEnv('server-sonar') {
+                                sh '''
+                                /opt/sonar-scanner/bin/sonar-scanner \
+                                -Dsonar.projectKey=$PROJECT_NAME \
+                                -Dsonar.sourceEncoding=UTF-8 \
+                                -Dsonar.language=java \
+                                -Dsonar.sources=. \
+                                -Dsonar.tests=. \
+                                -Dsonar.java.binaries=. \
+                                -Dsonar.java.test.binaries=. \
+                                -Dsonar.java.coveragePlugin=jacoco \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=java/jivox-targeting-coverage/target/site/jacoco-aggregate/jacoco.xml \
+                                -Dsonar.jacoco.reportPaths=. \
+                                -Dsonar.test.inclusions=/Test/ \
+                                '''
+                            }
+                        }
                     }
                 }
-            }
-            }
-       }
-
         stage("SonarQube Quality Gate Check") {
             steps {
                 script {
