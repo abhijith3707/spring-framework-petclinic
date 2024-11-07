@@ -102,7 +102,6 @@ pipeline {
             }
 
             // Pull the latest image
-            sh "docker pull owasp/zap2docker-stable"
 
             // Start OWASP ZAP in daemon mode
             sh """
