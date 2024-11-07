@@ -71,8 +71,6 @@ pipeline {
                 }
             }
         }
-        
-    stages {
         stage('Dependency Check') {
             steps {
                 script {
@@ -86,10 +84,7 @@ pipeline {
                 // Publish the report if using Jenkins' OWASP Dependency-Check plugin
                 dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml'
             }
-        }
-    }
-
-        
+        }        
         stage('Build Docker Image with Dynamic Tagging') {
             steps {
                 script {
