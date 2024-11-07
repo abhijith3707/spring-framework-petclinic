@@ -88,9 +88,8 @@ pipeline {
             }
         }
     }
-}
 
-
+        
         stage('Build Docker Image with Dynamic Tagging') {
             steps {
                 script {
