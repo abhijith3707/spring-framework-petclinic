@@ -104,18 +104,15 @@ pipeline {
             // Pull the latest image
 
             // Start OWASP ZAP in daemon mode
-            sh """
-            docker run -d --rm --name zap-daemon -p 8081:8080 -v $PWD:/zap/wrk zaproxy/zap-stable zap.sh -daemon -host 0.0.0.0 -port 8080
-
-            """
+            sh " docker exec owasp zap-baseline.py -t https://medium.com/ -r report.html -I"
 
             // Run the selected ZAP scan command
-            sh """
-            docker exec zap-daemon $scanCommand
-            """
+            // sh """
+            // docker exec zap-daemon $scanCommand
+            // """
 
             // Stop and remove the ZAP container after the scan
-            sh "docker stop zap-daemon && docker rm zap-daemon"
+            //sh "docker stop zap-daemon && docker rm zap-daemon"
         }
     }
 }
