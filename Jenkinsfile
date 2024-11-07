@@ -97,13 +97,56 @@ pipeline {
        stage('trivy-scan') {
             steps {
                 script {
-                    // scan the image
-                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest image --insecure "${APP_NAME}:${commitId}-${buildNumber}"' 
-                    // Generate the Report
-                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest -f template --template "@contrib/html.tpl" image "${APP_NAME}:${commitId}-${buildNumber}" > scan.html'
-                    // fails the build,if the scan finds high and critical vulnerabilities
-                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest --exit-code 1 --severity HIGH,CRITICAL image "${APP_NAME}:${commitId}-${buildNumber}"'
-                }
+                   stage('trivy-scan') {
+    steps {
+        script {
+            // Define the full image name once for reuse
+            def imageName = "${APP_NAME}:${commitId}-${buildNumber}"
+
+            // Run Trivy scan with additional configurations
+            sh """
+                docker run --rm \
+                -v "\$(pwd):/opt/src" \
+                -v /run/docker.sock:/var/run/docker.sock \
+                -v /tmp/trivy-cache:/cache \
+                -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db \
+                -e TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db \
+                -w /opt/src \
+                ghcr.io/aquasecurity/trivy:latest \
+                --cache-dir /cache image --insecure ${imageName}
+            """
+
+            // Generate the Report in HTML format
+            sh """
+                docker run --rm \
+                -v "\$(pwd):/opt/src" \
+                -v /run/docker.sock:/var/run/docker.sock \
+                -v /tmp/trivy-cache:/cache \
+                -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db \
+                -e TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db \
+                -w /opt/src \
+                ghcr.io/aquasecurity/trivy:latest \
+                -f template --template "@contrib/html.tpl" \
+                --cache-dir /cache image --insecure ${imageName} > scan.html
+            """
+
+            // Fail the build if high or critical vulnerabilities are found
+            sh """
+                docker run --rm \
+                -v "\$(pwd):/opt/src" \
+                -v /run/docker.sock:/var/run/docker.sock \
+                -v /tmp/trivy-cache:/cache \
+                -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db \
+                -e TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db \
+                -w /opt/src \
+                ghcr.io/aquasecurity/trivy:latest \
+                --exit-code 1 --severity HIGH,CRITICAL \
+                --cache-dir /cache image --insecure ${imageName}
+            """
+        }
+    }
+}
+
             }
         }
     }
