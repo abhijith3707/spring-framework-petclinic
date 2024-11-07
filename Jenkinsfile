@@ -94,11 +94,7 @@ pipeline {
                 }
             }
         }
-       stage('trivy-scan') {
-            steps {
-                script {
-                   stage('trivy-scan') {
-    
+
  stage('trivy-scan') {
             steps {
                 script {
