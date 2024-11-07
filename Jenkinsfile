@@ -104,7 +104,19 @@ pipeline {
  //            }
  //        }
  //    }
-    
+    parameters {
+    choice choices: ['Baseline', 'APIS', 'Full'],
+        description: 'zap check',
+        name: 'SCAN_TYPE'
+        
+    string defaultValue: 'https://medium.com/',
+        description: 'https://google.com',
+        name: 'TARGET'
+        
+    booleanParam defaultValue: true,
+        description: 'Parameter to know if you want to generate a report.',
+        name: 'GENERATE_REPORT'
+}
 
     post {
         success {
