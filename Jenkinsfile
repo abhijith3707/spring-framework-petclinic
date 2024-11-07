@@ -98,7 +98,7 @@ pipeline {
             steps {
                 script {
                     // scan the image
-                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest image "${APP_NAME}:${commitId}-${buildNumber}"' 
+                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest image --insecure "${APP_NAME}:${commitId}-${buildNumber}"' 
                     // Generate the Report
                     sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest -f template --template "@contrib/html.tpl" image "${APP_NAME}:${commitId}-${buildNumber}" > scan.html'
                     // fails the build,if the scan finds high and critical vulnerabilities
