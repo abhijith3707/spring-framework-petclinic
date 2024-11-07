@@ -8,6 +8,8 @@ pipeline {
         SONAR_PROJECT_KEY = 'petclinic' // SonarQube project key
         SONAR_PLUGIN_VERSION = 'org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121' // Explicit SonarQube Maven plugin version
         SCAN_TYPE = 'Full'
+        AWS_REGION = 'us-east-1'  // Replace with your AWS region
+        ECR_REPO_URI = '863518452866.dkr.ecr.us-east-1.amazonaws.com/863518452866.dkr.ecr.us-east-1.amazonaws.com/petclinic'  // Replace with ECR URI
     }
 
     parameters {
@@ -67,7 +69,7 @@ pipeline {
                     def qualityGate = waitForQualityGate()
                     if (qualityGate.status != 'OK') {
                         echo "${qualityGate.status}"
-                        error "Quality Gate failed: ${qualityGateStatus}"
+                        error "Quality Gate failed: ${qualityGate.status}"
                     } else {
                         echo "${qualityGate.status}"
                         echo "SonarQube Quality Gates Passed"
@@ -87,45 +89,29 @@ pipeline {
             }
         }
 
-    stage('Run OWASP ZAP Scan') {
-    steps {
-        script {
-            def scanCommand = ""
-            
-            // Determine the ZAP scan command based on the selected scan type
-            if (SCAN_TYPE == 'Baseline') {
-                scanCommand = 'zap-baseline.py -t https://google.com'
-            } else if (SCAN_TYPE == 'API') {
-                scanCommand = 'zap-api-scan.py -t https://google.com/openapi.json'
-            } else if (SCAN_TYPE == 'Full') {
-                scanCommand = 'zap-full-scan.py -t https://google.com'
+        stage('Run OWASP ZAP Scan') {
+            steps {
+                script {
+                    def scanCommand = ""
+                    
+                    if (SCAN_TYPE == 'Baseline') {
+                        scanCommand = 'zap-baseline.py -t https://google.com'
+                    } else if (SCAN_TYPE == 'API') {
+                        scanCommand = 'zap-api-scan.py -t https://google.com/openapi.json'
+                    } else if (SCAN_TYPE == 'Full') {
+                        scanCommand = 'zap-full-scan.py -t https://google.com'
+                    }
+
+                    sh "docker exec owasp ${scanCommand} -r report.html -I"
+                }
             }
-
-            // Pull the latest image
-
-            // Start OWASP ZAP in daemon mode
-            sh " docker exec owasp zap-baseline.py -t https://medium.com/ -r report.html -I"
-
-            // Run the selected ZAP scan command
-            // sh """
-            // docker exec zap-daemon $scanCommand
-            // """
-
-            // Stop and remove the ZAP container after the scan
-            //sh "docker stop zap-daemon && docker rm zap-daemon"
         }
-    }
-}
-stage('Copy Report to Workspace') {
-    steps {
-        script {
-            sh '''
-                 docker cp owasp:/zap/wrk/report.html ${WORKSPACE}/report.html
-             '''
-        }
-    }
-}
 
+        stage('Copy Report to Workspace') {
+            steps {
+                sh 'docker cp owasp:/zap/wrk/report.html ${WORKSPACE}/report.html'
+            }
+        }
 
         stage('Build Docker Image with Dynamic Tagging') {
             steps {
@@ -140,18 +126,29 @@ stage('Copy Report to Workspace') {
             }
         }
 
-        // Trivy scan stage is commented out
+        stage('Push Image to ECR') {
+            steps {
+                script {
+                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}"
+
+                    def ecrTag = "${ECR_REPO_URI}:${env.DYNAMIC_TAG.split(':')[1]}"
+                    sh "docker tag ${env.DYNAMIC_TAG} ${ecrTag}"
+
+                    sh "docker push ${ecrTag}"
+                }
+            }
+        }
+
+        // Uncomment and configure the Trivy scan if needed
         /*
         stage('trivy-scan') {
             steps {
                 script {
-                    // scan the image
-                    sh 'docker run   --rm   -v "$(realpath .):/opt/src"   -v /run/docker.sock:/var/run/docker.sock   -v /tmp/trivy-cache:/cache   -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db"   -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db"   -w /opt/src   aquasec/trivy:0.56.2 --cache-dir /cache image --quiet "${APP_NAME}:${commitId}-${buildNumber}"'
+                    sh 'docker run --rm -v "$(realpath .):/opt/src" -v /run/docker.sock:/var/run/docker.sock -v /tmp/trivy-cache:/cache -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db" -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db" -w /opt/src aquasec/trivy:0.56.2 --cache-dir /cache image --quiet "${APP_NAME}:${commitId}-${buildNumber}"'
                 }
             }
         }
         */
-
     }
 
     post {
@@ -163,7 +160,7 @@ stage('Copy Report to Workspace') {
         }
         always {
             archiveArtifacts artifacts: 'hadolint_report.txt', allowEmptyArchive: true
-            archiveArtifacts artifacts: '**/*.html', allowEmptyArchive: true  // Archive ZAP scan reports
+            archiveArtifacts artifacts: '**/*.html', allowEmptyArchive: true
             sh 'docker image prune -f'
         }
     }
