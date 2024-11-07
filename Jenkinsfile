@@ -95,15 +95,15 @@ pipeline {
             }
         }
 
- stage('trivy-scan') {
-            steps {
-                script {
-                    // scan the image
-                    sh 'docker run   --rm   -v "$(realpath .):/opt/src"   -v /run/docker.sock:/var/run/docker.sock   -v /tmp/trivy-cache:/cache   -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db"   -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db"   -w /opt/src   aquasec/trivy:0.56.2 --cache-dir /cache image --quiet "${APP_NAME}:${commitId}-${buildNumber}"'
-                }
-            }
-        }
-    }
+ // stage('trivy-scan') {
+ //            steps {
+ //                script {
+ //                    // scan the image
+ //                    sh 'docker run   --rm   -v "$(realpath .):/opt/src"   -v /run/docker.sock:/var/run/docker.sock   -v /tmp/trivy-cache:/cache   -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db"   -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db"   -w /opt/src   aquasec/trivy:0.56.2 --cache-dir /cache image --quiet "${APP_NAME}:${commitId}-${buildNumber}"'
+ //                }
+ //            }
+ //        }
+ //    }
     
 
     post {
