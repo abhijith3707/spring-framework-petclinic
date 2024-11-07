@@ -7,6 +7,7 @@ pipeline {
         WAR_FILE = 'target/*.war' // Path to the WAR file
         SONAR_PROJECT_KEY = 'petclinic' // SonarQube project key
         SONAR_PLUGIN_VERSION = 'org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121' // Explicit SonarQube Maven plugin version
+        SCAN_TYPE = 'Full'
     }
 
     parameters {
