@@ -97,6 +97,18 @@ pipeline {
                 }
             }
         }
+        stage('trivy-scan') {
+            steps {
+                script {
+                    // scan the image
+                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest image "${APP_NAME}:${commitId}-${buildNumber}"' 
+                    // Generate the Report
+                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest -f template --template "@contrib/html.tpl" image "${APP_NAME}:${commitId}-${buildNumber}" > scan.html'
+                    // fails the build,if the scan finds high and critical vulnerabilities
+                    sh 'docker run --rm ghcr.io/aquasecurity/trivy:latest --exit-code 1 --severity HIGH,CRITICAL image "${APP_NAME}:${commitId}-${buildNumber}"'
+                }
+            }
+        }
     }
 
     post {
