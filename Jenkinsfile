@@ -9,6 +9,10 @@ pipeline {
         SONAR_PLUGIN_VERSION = 'org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121' // Explicit SonarQube Maven plugin version
     }
 
+    parameters {
+        choice(name: 'SCAN_TYPE', choices: ['Baseline', 'API', 'Full'], description: 'Select ZAP scan type')
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -36,52 +40,74 @@ pipeline {
             }
         }
 
-       stage('SonarQube analysis') {
-                steps {
-                        script{
-                            withSonarQubeEnv('server-sonar') {
-                                sh '''
-                                /opt/sonar-scanner/bin/sonar-scanner \
-                                -Dsonar.projectKey=demo-project \
-                                -Dsonar.sourceEncoding=UTF-8 \
-                                -Dsonar.language=java \
-                                -Dsonar.sources=. \
-                                -Dsonar.tests=. \
-                                -Dsonar.java.binaries=. \
-                                -Dsonar.java.test.binaries=. \
-                                -Dsonar.test.inclusions=/Test/ \
-                                '''
-                            }
-                        }
+        stage('SonarQube analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('server-sonar') {
+                        sh '''
+                        /opt/sonar-scanner/bin/sonar-scanner \
+                        -Dsonar.projectKey=demo-project \
+                        -Dsonar.sourceEncoding=UTF-8 \
+                        -Dsonar.language=java \
+                        -Dsonar.sources=. \
+                        -Dsonar.tests=. \
+                        -Dsonar.java.binaries=. \
+                        -Dsonar.java.test.binaries=. \
+                        -Dsonar.test.inclusions=/Test/ \
+                        '''
                     }
                 }
+            }
+        }
+
         stage("SonarQube Quality Gate Check") {
             steps {
                 script {
-                def qualityGate = waitForQualityGate()
-                    
+                    def qualityGate = waitForQualityGate()
                     if (qualityGate.status != 'OK') {
                         echo "${qualityGate.status}"
                         error "Quality Gate failed: ${qualityGateStatus}"
-                    }
-                    else {
+                    } else {
                         echo "${qualityGate.status}"
                         echo "SonarQube Quality Gates Passed"
                     }
                 }
             }
         }
+
         stage('OWASP Dependency-Check Vulnerabilities') {
-      steps {
-        dependencyCheck additionalArguments: ''' 
+            steps {
+                dependencyCheck additionalArguments: ''' 
                     -o './'
                     -s './'
                     -f 'ALL' 
                     --prettyPrint''', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
-        
-        dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-      }
-    }
+                dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+            }
+        }
+
+        stage('Run OWASP ZAP Scan') {
+            steps {
+                script {
+                    def scanCommand = ""
+                    // Determine the ZAP scan command based on the selected scan type
+                    if (SCAN_TYPE == 'Baseline') {
+                        scanCommand = 'python3 zap-baseline.py'
+                    } else if (SCAN_TYPE == 'API') {
+                        scanCommand = 'python3 zap-api-scan.py'
+                    } else if (SCAN_TYPE == 'Full') {
+                        scanCommand = 'python3 zap-full-scan.py'
+                    }
+
+                    // Run OWASP ZAP scan in the Docker container
+                    sh """
+                    docker run --rm -t -v \$PWD:/zap/wrk owasp/zap2docker-stable -daemon -host 0.0.0.0 -port 8080
+                    docker run --rm -t -v \$PWD:/zap/wrk owasp/zap2docker-stable $scanCommand
+                    """
+                }
+            }
+        }
+
         stage('Build Docker Image with Dynamic Tagging') {
             steps {
                 script {
@@ -95,28 +121,18 @@ pipeline {
             }
         }
 
- // stage('trivy-scan') {
- //            steps {
- //                script {
- //                    // scan the image
- //                    sh 'docker run   --rm   -v "$(realpath .):/opt/src"   -v /run/docker.sock:/var/run/docker.sock   -v /tmp/trivy-cache:/cache   -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db"   -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db"   -w /opt/src   aquasec/trivy:0.56.2 --cache-dir /cache image --quiet "${APP_NAME}:${commitId}-${buildNumber}"'
- //                }
- //            }
- //        }
- 
-    parameters {
-    choice choices: ['Baseline', 'APIS', 'Full'],
-        description: 'zap check',
-        name: 'SCAN_TYPE'
-        
-    string defaultValue: 'https://medium.com/',
-        description: 'https://google.com',
-        name: 'TARGET'
-        
-    booleanParam defaultValue: true,
-        description: 'Parameter to know if you want to generate a report.',
-        name: 'GENERATE_REPORT'
-}
+        // Trivy scan stage is commented out
+        /*
+        stage('trivy-scan') {
+            steps {
+                script {
+                    // scan the image
+                    sh 'docker run   --rm   -v "$(realpath .):/opt/src"   -v /run/docker.sock:/var/run/docker.sock   -v /tmp/trivy-cache:/cache   -e "TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db"   -e "TRIVY_JAVA_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-java-db"   -w /opt/src   aquasec/trivy:0.56.2 --cache-dir /cache image --quiet "${APP_NAME}:${commitId}-${buildNumber}"'
+                }
+            }
+        }
+        */
+
     }
 
     post {
@@ -128,6 +144,7 @@ pipeline {
         }
         always {
             archiveArtifacts artifacts: 'hadolint_report.txt', allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/*.html', allowEmptyArchive: true  // Archive ZAP scan reports
             sh 'docker image prune -f'
         }
     }
