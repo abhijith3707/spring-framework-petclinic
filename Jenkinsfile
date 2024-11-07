@@ -116,7 +116,15 @@ pipeline {
         }
     }
 }
-
+stage('Copy Report to Workspace') {
+    steps {
+        script {
+            sh '''
+                 docker cp owasp:/zap/wrk/report.html ${WORKSPACE}/report.html
+             '''
+        }
+    }
+}
 
 
         stage('Build Docker Image with Dynamic Tagging') {
