@@ -94,18 +94,18 @@ pipeline {
             
             // Determine the ZAP scan command based on the selected scan type
             if (SCAN_TYPE == 'Baseline') {
-                scanCommand = 'zap-baseline.py -t http://your-target-url'
+                scanCommand = 'zap-baseline.py -t http://google.com'
             } else if (SCAN_TYPE == 'API') {
-                scanCommand = 'zap-api-scan.py -t http://your-target-url/openapi.json'
+                scanCommand = 'zap-api-scan.py -t http://google.com/openapi.json'
             } else if (SCAN_TYPE == 'Full') {
-                scanCommand = 'zap-full-scan.py -t http://your-target-url'
+                scanCommand = 'zap-full-scan.py -t http://google.com'
             }
 
             // Pull the latest image
 
             // Start OWASP ZAP in daemon mode
             sh """
-            docker run -d --name zap-daemon -p 8080:8080 -v \$PWD:/zap/wrk owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
+            docker run -d --name zap-daemon -p 8080:8080 -v \$PWD:/zap/wrk zaproxy/zap-stable zap.sh -daemon -host 0.0.0.0 -port 8080
             """
 
             // Run the selected ZAP scan command
