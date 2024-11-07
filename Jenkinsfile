@@ -103,7 +103,7 @@ pipeline {
  //                }
  //            }
  //        }
- //    }
+ 
     parameters {
     choice choices: ['Baseline', 'APIS', 'Full'],
         description: 'zap check',
@@ -117,6 +117,7 @@ pipeline {
         description: 'Parameter to know if you want to generate a report.',
         name: 'GENERATE_REPORT'
 }
+    }
 
     post {
         success {
