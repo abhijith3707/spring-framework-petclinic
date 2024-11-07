@@ -87,27 +87,40 @@ pipeline {
             }
         }
 
-        stage('Run OWASP ZAP Scan') {
-            steps {
-                script {
-                    def scanCommand = ""
-                    // Determine the ZAP scan command based on the selected scan type
-                    if (SCAN_TYPE == 'Baseline') {
-                        scanCommand = 'python3 zap-baseline.py'
-                    } else if (SCAN_TYPE == 'API') {
-                        scanCommand = 'python3 zap-api-scan.py'
-                    } else if (SCAN_TYPE == 'Full') {
-                        scanCommand = 'python3 zap-full-scan.py'
-                    }
-
-                    // Run OWASP ZAP scan in the Docker container
-                    sh """
-                    docker run --rm -t -v \$PWD:/zap/wrk owasp/zap2docker-stable -daemon -host 0.0.0.0 -port 8080
-                    docker run --rm -t -v \$PWD:/zap/wrk owasp/zap2docker-stable $scanCommand
-                    """
-                }
+    stage('Run OWASP ZAP Scan') {
+    steps {
+        script {
+            def scanCommand = ""
+            
+            // Determine the ZAP scan command based on the selected scan type
+            if (SCAN_TYPE == 'Baseline') {
+                scanCommand = 'zap-baseline.py -t http://your-target-url'
+            } else if (SCAN_TYPE == 'API') {
+                scanCommand = 'zap-api-scan.py -t http://your-target-url/openapi.json'
+            } else if (SCAN_TYPE == 'Full') {
+                scanCommand = 'zap-full-scan.py -t http://your-target-url'
             }
+
+            // Pull the latest image
+            sh "docker pull owasp/zap2docker-stable"
+
+            // Start OWASP ZAP in daemon mode
+            sh """
+            docker run -d --name zap-daemon -p 8080:8080 -v \$PWD:/zap/wrk owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
+            """
+
+            // Run the selected ZAP scan command
+            sh """
+            docker exec zap-daemon $scanCommand
+            """
+
+            // Stop and remove the ZAP container after the scan
+            sh "docker stop zap-daemon && docker rm zap-daemon"
         }
+    }
+}
+
+
 
         stage('Build Docker Image with Dynamic Tagging') {
             steps {
