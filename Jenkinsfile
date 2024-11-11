@@ -8,7 +8,7 @@ pipeline {
         SONAR_PROJECT_KEY = 'petclinic' // SonarQube project key
         SONAR_PLUGIN_VERSION = 'org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121' // Explicit SonarQube Maven plugin version
         SCAN_TYPE = 'Full'
-        AWS_REGION = 'us-east-1'  // Replace with your AWS region
+        AWS_REGION = 'us-west-2'  // Replace with your AWS region
         ECR_REPO_URI = '863518452866.dkr.ecr.us-west-2.amazonaws.com/petclinic' // Replace with ECR URI
     }
 
