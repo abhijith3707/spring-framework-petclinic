@@ -1,19 +1,18 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
   name: petclinic
+  namespace: argocd
 spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: petclinic
-  template:
-    metadata:
-      labels:
-        app: petclinic
-    spec:
-      containers:
-        - name: petclinic
-          image: 863518452866.dkr.ecr.us-west-2.amazonaws.com/petclinic:latest  # Your ECR image
-          ports:
-            - containerPort: 8080
+  project: default
+  source:
+    repoURL: 'https://github.com/abhijith3707/spring-framework-petclinic.git'
+    targetRevision: HEAD
+    path: 'manifest' # Adjust this path as per your repo structure
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: petclinic
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
