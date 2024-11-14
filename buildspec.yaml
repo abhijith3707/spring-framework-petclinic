@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing dependencies..."
+      - curl -sSfL https://get.docker.com | sh
+      - yum install -y jq
+      - pip install docker-compose
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 863518452866.dkr.ecr.us-west-2.amazonaws.com/devopsrepo
+  build:
+    commands:
+      - echo "Running tests..."
+      - ./run_tests.sh  # Modify to fit your test script
+      - echo "Building Docker image..."
+      - docker build -t devopsrepo:latest .
+      - echo "Tagging image with ECR URI..."
+      - docker tag devopsrepo:latest 863518452866.dkr.ecr.us-west-2.amazonaws.com/devopsrepo:latest
+  post_build:
+    commands:
+      - echo "Pushing Docker image to ECR..."
+      - docker push 863518452866.dkr.ecr.us-west-2.amazonaws.com/devopsrepo:latest
+      - echo "Image successfully pushed to ECR"
+artifacts:
+  files:
+    - "**/*"
